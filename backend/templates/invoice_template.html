@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ invoice.invoiceNumber }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            position: relative;
+        }
+        
+      
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            font-size: 72px;
+            color: rgba(255, 0, 0, 0.1);
+            font-weight: bold;
+            z-index: -1;
+            pointer-events: none;
+        }
+ 
+        
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 20px;
+        }
+        
+        .invoice-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #007bff;
+            margin: 0;
+        }
+        
+        .invoice-number {
+            font-size: 14px;
+            color: #666;
+            margin: 5px 0;
+        }
+        
+        .invoice-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        
+        .business-info, .client-info {
+            width: 48%;
+        }
+        
+        .info-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        
+        .info-content {
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        
+        .items-table th {
+            background-color: #007bff;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        .items-table td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .items-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .totals {
+            width: 300px;
+            margin-left: auto;
+            margin-top: 20px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .total-row.final {
+            border-bottom: 2px solid #007bff;
+            font-weight: bold;
+            font-size: 16px;
+            color: #007bff;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #666;
+            font-size: 10px;
+        }
+        
+        @media print {
+            body {
+                margin: 0;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% if watermark %}
+    <div class="watermark">PREVIEW</div>
+    {% endif %}
+    
+    <div class="invoice-header">
+        <div>
+            <h1 class="invoice-title">INVOICE</h1>
+            <div class="invoice-number">{{ invoice.invoiceNumber }}</div>
+        </div>
+        <div class="text-right">
+            <div><strong>Date:</strong> {{ invoice.invoiceDate }}</div>
+            {% if invoice.dueDate %}
+            <div><strong>Due Date:</strong> {{ invoice.dueDate }}</div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="invoice-details">
+        <div class="business-info">
+            <div class="info-title">FROM:</div>
+            <div class="info-content">
+                <strong>{{ invoice.businessName }}</strong><br>
+                {{ invoice.businessAddress|replace('\n', '<br>')|safe }}<br>
+                {% if invoice.businessPhone %}
+                Phone: {{ invoice.businessPhone }}<br>
+                {% endif %}
+                {% if invoice.businessEmail %}
+                Email: {{ invoice.businessEmail }}<br>
+                {% endif %}
+                {% if invoice.businessGST %}
+                GST: {{ invoice.businessGST }}
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="client-info">
+            <div class="info-title">TO:</div>
+            <div class="info-content">
+                <strong>{{ invoice.clientName }}</strong><br>
+                {{ invoice.clientAddress|replace('\n', '<br>')|safe }}<br>
+                {% if invoice.clientEmail %}
+                Email: {{ invoice.clientEmail }}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th class="text-right">Quantity</th>
+                <th class="text-right">Rate (₹)</th>
+                <th class="text-right">Amount (₹)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice.items %}
+            <tr>
+                <td>{{ item.description }}</td>
+                <td class="text-right">{{ item.quantity }}</td>
+                <td class="text-right">{{ "%.2f"|format(item.rate) }}</td>
+                <td class="text-right">{{ "%.2f"|format(item.amount) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="totals">
+        <div class="total-row">
+            <span>Subtotal:</span>
+            <span>₹{{ "%.2f"|format(invoice.subtotal) }}</span>
+        </div>
+        <div class="total-row">
+            <span>Tax ({{ invoice.taxRate }}%):</span>
+            <span>₹{{ "%.2f"|format(invoice.taxAmount) }}</span>
+        </div>
+        <div class="total-row final">
+            <span>Total:</span>
+            <span>₹{{ "%.2f"|format(invoice.total) }}</span>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Generated on {{ generated_at }}</p>
+        {% if not watermark %}
+        <p>This is a computer-generated invoice.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
